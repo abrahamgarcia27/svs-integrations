@@ -73,7 +73,7 @@ class TypebotMondayController extends Controller
 
         if ($existingItem) {
             // Scenario A: Update existing item
-            $note = "Actualización recibida desde Typebot.\nFecha: " . now()->toDateTimeString();
+            $note = "Update received from Typebot.\Date: " . now()->toDateTimeString();
             
             // You can customize the note content here
             $this->mondayService->addUpdate($existingItem['id'], $note);
