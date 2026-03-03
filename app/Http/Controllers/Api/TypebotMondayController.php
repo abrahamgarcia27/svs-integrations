@@ -19,14 +19,12 @@ class TypebotMondayController extends Controller
     public function upsert(Request $request)
     {
         $request->validate([
-            'board_id' => 'nullable|string', // Optional now, defaults to config
-            'email' => 'nullable|email',
-            'phone' => 'nullable|string',
-            'full_name' => 'nullable|string',
-            'name' => 'nullable|string',
-            'country' => 'nullable|string',
-            'company' => 'nullable|string',
-            'group_id' => 'nullable|string', // Optional: ID of the group for new leads
+            'board_id' => 'nullable|string',
+            'group_id' => 'nullable|string',
+            'lead_info' => 'nullable|array',
+            'project_details' => 'nullable|array',
+            'logistics' => 'nullable|array',
+            'timeline' => 'nullable|array',
         ]);
 
         // Get config values
@@ -48,12 +46,17 @@ class TypebotMondayController extends Controller
         $boardId = $request->input('board_id') ?? $configBoardId;
         $groupId = $request->input('group_id') ?? $configGroupId;
         
-        $email = $request->input('email');
-        $phone = $request->input('phone');
+        $leadInfo = $request->input('lead_info', []);
+        $projectDetails = $request->input('project_details', []);
+        $logistics = $request->input('logistics', []);
+        $timeline = $request->input('timeline', []);
+
+        $email = $leadInfo['email'] ?? null;
+        $phone = $leadInfo['phone'] ?? null;
         // Map full_name (Typebot) to name
-        $name = $request->input('full_name') ?: ($request->input('name') ?: 'Lead sin nombre');
-        $country = $request->input('country');
-        $company = $request->input('company');
+        $name = ($leadInfo['full_name'] ?? '') ?: ($leadInfo['name'] ?? 'Lead sin nombre');
+        $country = $leadInfo['country'] ?? null;
+        $company = $leadInfo['company'] ?? null;
 
         if (!$boardId) {
             return response()->json(['status' => 'error', 'message' => 'Board ID is required (env or request)'], 400);
@@ -73,7 +76,7 @@ class TypebotMondayController extends Controller
 
         if ($existingItem) {
             // Scenario A: Update existing item
-            $note = "Update received from Typebot.\Date: " . now()->toDateTimeString();
+            $note = $this->generateNoteContent($leadInfo, $projectDetails, $logistics, $timeline);
             
             // You can customize the note content here
             $this->mondayService->addUpdate($existingItem['id'], $note);
@@ -118,6 +121,10 @@ class TypebotMondayController extends Controller
             }
 
             if ($newItem) {
+                // Add note to the new item as well
+                $note = $this->generateNoteContent($leadInfo, $projectDetails, $logistics, $timeline);
+                $this->mondayService->addUpdate($newItem['id'], $note);
+
                 return response()->json([
                     'status' => 'success',
                     'action' => 'created',
@@ -131,5 +138,29 @@ class TypebotMondayController extends Controller
                 ], 500);
             }
         }
+    }
+
+    private function generateNoteContent($leadInfo, $projectDetails, $logistics, $timeline)
+    {
+        return "Lead Info:
+" . ($leadInfo['full_name'] ?? '') . "
+" . ($leadInfo['email'] ?? '') . "
+" . ($leadInfo['phone'] ?? '') . "
+
+Purchase or Rent: " . ($projectDetails['purchase_or_rent'] ?? '') . "
+Knows About 16:9 Ratio?: " . ($projectDetails['knows_about_16_9_ratio'] ?? '') . "
+Screen Size: " . ($projectDetails['screen_size'] ?? '') . "
+Indoor or Outdoor: " . ($projectDetails['indoor_or_outdoor'] ?? '') . "
+Size: " . ($projectDetails['size'] ?? '') . "
+Need Pixel Advise? " . ($projectDetails['needs_pixel_advise'] ?? '') . "
+Pixel Pitch Desired: " . ($projectDetails['pixel_pitch_desired'] ?? '') . "
+Checked Nanolite info?: " . ($projectDetails['checked_nanolite_info'] ?? '') . "
+Installation method: " . ($projectDetails['installation_method'] ?? '') . "
+Budget Range: " . ($projectDetails['budget_range'] ?? '') . "
+Intended Purpose: " . ($projectDetails['intended_purpose'] ?? '') . "
+Customer Will Pick up?: " . ($logistics['customer_will_pick_up'] ?? '') . "
+Shipping State: " . ($logistics['shipping_state'] ?? '') . "
+Time Line: " . ($timeline['project_timeline'] ?? '') . "
+Time Frame to be contacted: " . ($timeline['preferred_contact_time_frame'] ?? '');
     }
 }
