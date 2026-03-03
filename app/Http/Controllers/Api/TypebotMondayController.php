@@ -53,6 +53,21 @@ class TypebotMondayController extends Controller
 
         $email = $leadInfo['email'] ?? null;
         $phone = $leadInfo['phone'] ?? null;
+
+        // Basic validation for email and phone to avoid Monday API errors
+        if ($email && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            Log::warning("Invalid email format received: $email. Skipping email column update.");
+            $email = null; 
+        }
+
+        if ($phone && (strpos($phone, '{{') !== false || strlen($phone) < 5)) {
+             Log::warning("Invalid phone format received: $phone. Skipping phone column update.");
+             $phoneForColumn = null;
+        } else {
+             // Clean phone number for Monday column (keep only digits and +)
+             $phoneForColumn = $phone ? preg_replace('/[^0-9+]/', '', $phone) : null;
+        }
+
         // Map full_name (Typebot) to name
         $name = ($leadInfo['full_name'] ?? '') ?: ($leadInfo['name'] ?? 'Lead sin nombre');
         $country = $leadInfo['country'] ?? null;
@@ -92,7 +107,7 @@ class TypebotMondayController extends Controller
             $columnValues = [
                 // Map standard columns using configured IDs
                 $emailColumnId => ['email' => $email, 'text' => $email],
-                $phoneColumnId => ['phone' => $phone, 'countryShortName' => 'US'], // Adjust country default if needed
+                $phoneColumnId => ['phone' => $phoneForColumn, 'countryShortName' => 'US'], // Adjust country default if needed
                 $countryColumnId => $country,
                 $companyColumnId => $company,
                 
@@ -110,7 +125,7 @@ class TypebotMondayController extends Controller
 
             // Filter out null values
             if (!$email) unset($columnValues[$emailColumnId]);
-            if (!$phone) unset($columnValues[$phoneColumnId]);
+            if (!$phoneForColumn) unset($columnValues[$phoneColumnId]);
             if (!$country) unset($columnValues[$countryColumnId]);
             if (!$company) unset($columnValues[$companyColumnId]);
 

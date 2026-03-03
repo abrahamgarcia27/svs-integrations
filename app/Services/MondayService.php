@@ -95,6 +95,13 @@ class MondayService
             return null;
         }
 
-        return $response->json();
+        $data = $response->json();
+
+        if (isset($data['errors'])) {
+            Log::error('Monday GraphQL Error', ['errors' => $data['errors'], 'variables' => $variables]);
+            return null;
+        }
+
+        return $data;
     }
 }
