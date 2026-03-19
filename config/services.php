@@ -48,6 +48,17 @@ return [
             'company_column' => env('MONDAY_LEADS_COMPANY_FIELD_ID', 'company'),
             'logging_enabled' => env('MONDAY_LOGGING_ENABLED', false),
         ],
+        'sales_rep' => [
+            'token' => env('MONDAY_SALES_REP_API_TOKEN'),
+            'leads_board_id' => env('MONDAY_SALES_REP_LEADS_BOARD_ID'),
+            'opps_board_id' => env('MONDAY_SALES_REP_OPPS_BOARD_ID'),
+            'lead_owner_col_id' => env('MONDAY_SALES_REP_LEAD_OWNER_COL_ID', 'lead_owner'),
+            'deal_owner_col_id' => env('MONDAY_SALES_REP_DEAL_OWNER_COL_ID', 'deal_owner'),
+            'connect_boards_col_id' => env('MONDAY_SALES_REP_CONNECT_BOARDS_COL_ID', 'link_to_leads__1'),
+            'opps_email_col_id' => env('MONDAY_SALES_REP_OPPS_EMAIL_COL_ID', 'email'),
+            'lead_email_col_id' => env('MONDAY_SALES_REP_LEAD_EMAIL_COL_ID', 'lead_email'),
+            'backfill_token' => env('MONDAY_SALES_REP_BACKFILL_TOKEN'),
+        ],
     ],
 
 ];
